@@ -163,6 +163,16 @@ namespace Microsoft.EntityFrameworkCore.Query
             }
         }
 
+        [Fact]
+        public virtual void Fubar()
+        {
+            using (var ctx = CreateContext())
+            {
+                var query = ctx.Set<OwnedPerson>().Where(p => p.PersonAddress.Country.Name == "USA");
+                var result = query.ToList();
+            }
+        }
+
         protected virtual DbContext CreateContext() => Fixture.CreateContext();
 
         public abstract class OwnedQueryFixtureBase : SharedStoreFixtureBase<PoolableDbContext>

@@ -439,6 +439,14 @@ LEFT JOIN (
 ORDER BY [t].[Id]");
         }
 
+        public override void Fubar()
+        {
+            base.Fubar();
+
+            AssertSql(
+                @"");
+        }
+
         private void AssertSql(params string[] expected)
             => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 
