@@ -1002,6 +1002,8 @@ namespace Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal
             Func<Expression, Expression> propertyCreator,
             Func<Expression, Expression> conditionalAccessPropertyCreator)
         {
+            var originalQsre = outerQuerySourceReferenceExpression;
+
             Expression querySourceReferenceExpression = outerQuerySourceReferenceExpression;
             var navigationJoins = _navigationJoins;
 
@@ -1070,13 +1072,23 @@ namespace Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal
                 var navigationJoin
                     = navigationJoins
                         .FirstOrDefault(nj =>
-                            (querySourceReferenceExpression as QuerySourceReferenceExpression)?.ReferencedQuerySource == nj.QuerySource
+                            nj.QuerySource == (querySourceReferenceExpression as QuerySourceReferenceExpression ?? originalQsre).ReferencedQuerySource
                             && nj.Navigation == navigation);
+
+                //var navigationJoin = default(NavigationJoin);
+                //if (querySourceReferenceExpression is QuerySourceReferenceExpression qsre)
+                //{
+                //    navigationJoin
+                //        = navigationJoins
+                //            .FirstOrDefault(nj => 
+                //                nj.QuerySource == qsre.ReferencedQuerySource
+                //                && nj.Navigation == navigation);
+                //}
 
                 if (navigationJoin == null)
                 {
                     var joinClause = BuildJoinFromNavigation(
-                        (QuerySourceReferenceExpression)querySourceReferenceExpression,
+                        querySourceReferenceExpression,
                         navigation,
                         targetEntityType,
                         addNullCheckToOuterKeySelector,
@@ -1088,7 +1100,7 @@ namespace Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal
                             joinClause,
                             navigation,
                             targetEntityType,
-                            (QuerySourceReferenceExpression)querySourceReferenceExpression,
+                            querySourceReferenceExpression as QuerySourceReferenceExpression ?? originalQsre,
                             null,
                             new List<IBodyClause>(),
                             new List<ResultOperatorBase>
@@ -1101,7 +1113,7 @@ namespace Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal
                     {
                         navigationJoin
                             = new NavigationJoin(
-                                ((QuerySourceReferenceExpression)querySourceReferenceExpression).ReferencedQuerySource,
+                                (querySourceReferenceExpression as QuerySourceReferenceExpression ?? originalQsre).ReferencedQuerySource,
                                 navigation,
                                 joinClause,
                                 new List<IBodyClause>(),
@@ -1172,6 +1184,7 @@ namespace Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal
 
             var defaultIfEmptySubquery = new SubQueryExpression(groupJoinSubqueryModel);
             var defaultIfEmptyAdditionalFromClause = new AdditionalFromClause(joinClause.ItemName, joinClause.ItemType, defaultIfEmptySubquery);
+
             navigationJoin = new NavigationJoin(
                 querySourceReferenceExpression.ReferencedQuerySource,
                 navigation,
@@ -1325,7 +1338,7 @@ namespace Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal
         }
 
         private JoinClause BuildJoinFromNavigation(
-            QuerySourceReferenceExpression querySourceReferenceExpression,
+            /*QuerySourceReference*/Expression querySourceReferenceExpression,
             INavigation navigation,
             IEntityType targetEntityType,
             bool addNullCheckToOuterKeySelector,
@@ -1339,10 +1352,22 @@ namespace Microsoft.EntityFrameworkCore.Query.ExpressionVisitors.Internal
                         : navigation.ForeignKey.PrincipalKey.Properties,
                     addNullCheckToOuterKeySelector);
 
-            var itemName
-                = querySourceReferenceExpression.ReferencedQuerySource.HasGeneratedItemName()
+            //var itemName
+            //    = querySourceReferenceExpression.ReferencedQuerySource.HasGeneratedItemName()
+            //        ? navigation.DeclaringEntityType.DisplayName()[0].ToString().ToLowerInvariant()
+            //        : querySourceReferenceExpression.ReferencedQuerySource.ItemName;
+
+            string itemName = null;
+            if (querySourceReferenceExpression is QuerySourceReferenceExpression qsre)
+            {
+                itemName = qsre.ReferencedQuerySource.HasGeneratedItemName()
                     ? navigation.DeclaringEntityType.DisplayName()[0].ToString().ToLowerInvariant()
-                    : querySourceReferenceExpression.ReferencedQuerySource.ItemName;
+                    : qsre.ReferencedQuerySource.ItemName;
+            }
+            else
+            {
+                itemName = navigation.DeclaringEntityType.DisplayName()[0].ToString().ToLowerInvariant();
+            }
 
             var joinClause
                 = new JoinClause(

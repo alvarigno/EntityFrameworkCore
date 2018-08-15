@@ -235,25 +235,30 @@ namespace Microsoft.EntityFrameworkCore.Query
                                     {
                                         OwnedAddressOwnedPersonId = 1,
                                         PlanetId = 1,
+                                        NationalAnthemId = 1,
                                         Name = "USA"
                                     }, new
                                     {
                                         OwnedAddressOwnedPersonId = 2,
                                         PlanetId = 1,
+                                        NationalAnthemId = 1,
                                         Name = "USA"
                                     }, new
                                     {
                                         OwnedAddressOwnedPersonId = 3,
                                         PlanetId = 1,
+                                        NationalAnthemId = 1,
                                         Name = "USA"
                                     }, new
                                     {
                                         OwnedAddressOwnedPersonId = 4,
                                         PlanetId = 1,
+                                        NationalAnthemId = 1,
                                         Name = "USA"
                                     });
 
-                                    cb.HasOne(cc => cc.Planet).WithMany().HasForeignKey(ee => ee.PlanetId);
+                                    cb.HasOne(cc => cc.Planet).WithMany().HasForeignKey(ee => ee.PlanetId).OnDelete(DeleteBehavior.Restrict);
+                                    cb.HasOne(cc => cc.NationalAnthem).WithOne().HasForeignKey<OwnedCountry>(ee => ee.NationalAnthemId);
                                 });
                             });
 
@@ -311,16 +316,26 @@ namespace Microsoft.EntityFrameworkCore.Query
                                         BranchId = 3
                                     });
 
-                                ab.OwnsOne(a => a.Country).HasData(
-                                    new
-                                    {
-                                        OwnedAddressBranchId = 2,
-                                        Name = "Canada"
-                                    }, new
-                                    {
-                                        OwnedAddressBranchId = 3,
-                                        Name = "Canada"
-                                    });
+                                ab.OwnsOne(a => a.Country, cb =>
+                                {
+                                    cb.HasData(
+                                        new
+                                        {
+                                            OwnedAddressBranchId = 2,
+                                            PlanetId = 1,
+                                            NationalAnthemId = 2,
+                                            Name = "Canada"
+                                        }, new
+                                        {
+                                            OwnedAddressBranchId = 3,
+                                            PlanetId = 1,
+                                            NationalAnthemId = 2,
+                                            Name = "Canada"
+                                        });
+
+                                    cb.HasOne(cc => cc.Planet).WithMany().HasForeignKey(ee => ee.PlanetId).OnDelete(DeleteBehavior.Restrict);
+                                    cb.HasOne(cc => cc.NationalAnthem).WithOne().HasForeignKey<OwnedCountry>(ee => ee.NationalAnthemId);
+                                });
                             });
                     });
 
@@ -342,12 +357,19 @@ namespace Microsoft.EntityFrameworkCore.Query
                                         LeafAId = 3
                                     });
 
-                                ab.OwnsOne(a => a.Country).HasData(
+                                ab.OwnsOne(a => a.Country, cb =>
+                                {
+                                    cb.HasData(
                                     new
                                     {
                                         OwnedAddressLeafAId = 3,
+                                        PlanetId = 1,
                                         Name = "Mexico"
                                     });
+
+                                    cb.HasOne(cc => cc.Planet).WithMany().HasForeignKey(ee => ee.PlanetId).OnDelete(DeleteBehavior.Restrict);
+                                    cb.HasOne(cc => cc.NationalAnthem).WithOne().HasForeignKey<OwnedCountry>(ee => ee.NationalAnthemId);
+                                });
                             });
                     });
 
@@ -369,18 +391,32 @@ namespace Microsoft.EntityFrameworkCore.Query
                                         LeafBId = 4
                                     });
 
-                                ab.OwnsOne(a => a.Country).HasData(
+                                ab.OwnsOne(a => a.Country, cb =>
+                                {
+                                    cb.HasData(
                                     new
                                     {
                                         OwnedAddressLeafBId = 4,
+                                        PlanetId = 1,
                                         Name = "Panama"
                                     });
+
+                                    cb.HasOne(cc => cc.Planet).WithMany().HasForeignKey(ee => ee.PlanetId).OnDelete(DeleteBehavior.Restrict);
+                                    cb.HasOne(cc => cc.NationalAnthem).WithOne().HasForeignKey<OwnedCountry>(ee => ee.NationalAnthemId);
+                                });
                             });
                     });
 
                 modelBuilder.Entity<Planet>(pb =>
                 {
                     pb.HasData(new Planet { Id = 1 });
+                });
+
+                modelBuilder.Entity<NationalAnthem>(pb =>
+                {
+                    pb.HasData(
+                        new NationalAnthem { Id = 1, Name = "The Star-Spangled Banner" },
+                        new NationalAnthem { Id = 2, Name = "O Canada" });
                 });
             }
 
@@ -404,8 +440,17 @@ namespace Microsoft.EntityFrameworkCore.Query
         {
             public string Name { get; set; }
 
-            public int? PlanetId { get; set; }
+            public int PlanetId { get; set; }
             public Planet Planet { get; set; }
+
+            public int? NationalAnthemId { get; set; }
+            public NationalAnthem NationalAnthem { get; set; }
+        }
+
+        protected class NationalAnthem
+        {
+            public int Id { get; set; }
+            public string Name { get; set; }
         }
 
         protected class OwnedPerson
