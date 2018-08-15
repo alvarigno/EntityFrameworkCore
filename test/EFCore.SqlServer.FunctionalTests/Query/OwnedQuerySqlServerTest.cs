@@ -447,6 +447,22 @@ ORDER BY [t].[Id]");
                 @"");
         }
 
+        public override void Fubar2()
+        {
+            base.Fubar2();
+
+            AssertSql(
+                @"");
+        }
+
+        public override void Fubar3()
+        {
+            base.Fubar3();
+
+            AssertSql(
+                @"");
+        }
+
         private void AssertSql(params string[] expected)
             => Fixture.TestSqlLoggerFactory.AssertBaseline(expected);
 

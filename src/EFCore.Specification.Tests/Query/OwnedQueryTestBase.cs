@@ -168,7 +168,27 @@ namespace Microsoft.EntityFrameworkCore.Query
         {
             using (var ctx = CreateContext())
             {
-                var query = ctx.Set<OwnedPerson>().Where(p => p.PersonAddress.Country.Name == "USA");
+                var query = ctx.Set<OwnedPerson>().Where(p => p.PersonAddress.Country.Name == "USA").Select(p => p.PersonAddress.Country.Name);
+                var result = query.ToList();
+            }
+        }
+
+        [Fact]
+        public virtual void Fubar2()
+        {
+            using (var ctx = CreateContext())
+            {
+                var query = ctx.Set<OwnedPerson>().Where(p => p.Orders.Count > 0).Select(p => p.Orders);
+                var result = query.ToList();
+            }
+        }
+
+        [Fact]
+        public virtual void Fubar3()
+        {
+            using (var ctx = CreateContext())
+            {
+                var query = ctx.Set<OwnedPerson>().Select(p => p.PersonAddress.Country.Planet.Id);
                 var result = query.ToList();
             }
         }
@@ -208,24 +228,33 @@ namespace Microsoft.EntityFrameworkCore.Query
                                         OwnedPersonId = 4
                                     });
 
-                                ab.OwnsOne(a => a.Country).HasData(
+                                ab.OwnsOne(a => a.Country, cb =>
+                                {
+                                    cb.HasData(
                                     new
                                     {
                                         OwnedAddressOwnedPersonId = 1,
+                                        PlanetId = 1,
                                         Name = "USA"
                                     }, new
                                     {
                                         OwnedAddressOwnedPersonId = 2,
+                                        PlanetId = 1,
                                         Name = "USA"
                                     }, new
                                     {
                                         OwnedAddressOwnedPersonId = 3,
+                                        PlanetId = 1,
                                         Name = "USA"
                                     }, new
                                     {
                                         OwnedAddressOwnedPersonId = 4,
+                                        PlanetId = 1,
                                         Name = "USA"
                                     });
+
+                                    cb.HasOne(cc => cc.Planet).WithMany().HasForeignKey(ee => ee.PlanetId);
+                                });
                             });
 
                         eb.OwnsMany(
@@ -348,6 +377,11 @@ namespace Microsoft.EntityFrameworkCore.Query
                                     });
                             });
                     });
+
+                modelBuilder.Entity<Planet>(pb =>
+                {
+                    pb.HasData(new Planet { Id = 1 });
+                });
             }
 
             public override DbContextOptionsBuilder AddOptions(DbContextOptionsBuilder builder)
@@ -369,6 +403,9 @@ namespace Microsoft.EntityFrameworkCore.Query
         protected class OwnedCountry
         {
             public string Name { get; set; }
+
+            public int? PlanetId { get; set; }
+            public Planet Planet { get; set; }
         }
 
         protected class OwnedPerson
@@ -397,6 +434,11 @@ namespace Microsoft.EntityFrameworkCore.Query
         protected class LeafB : OwnedPerson
         {
             public OwnedAddress LeafBAddress { get; set; }
+        }
+
+        protected class Planet
+        {
+            public int Id { get; set; }
         }
     }
 }
