@@ -906,5 +906,21 @@ FROM [Orders] AS [o]");
 FROM [Customers] AS [c]
 ORDER BY [B]");
         }
+
+        public override void Select_GetValueOrDefault_on_DateTime()
+        {
+            base.Select_GetValueOrDefault_on_DateTime();
+
+            AssertSql(
+               @"SELECT COALESCE([o].[OrderDate], '0001-01-01T00:00:00.0000000')
+FROM [Orders] AS [o]");
+        }
+        public override void Select_GetValueOrDefault_on_DateTime_with_null_values()
+        {
+            base.Select_GetValueOrDefault_on_DateTime_with_null_values();
+
+            AssertSql(
+               @"");
+        }
     }
 }
